@@ -11,7 +11,6 @@ import pytest
 
 import editor_python_test_tools.hydra_test_utils as hydra
 import ly_test_tools.environment.file_system as file_system
-from ly_test_tools.benchmark.data_aggregator import BenchmarkDataAggregator
 from ly_test_tools.o3de.editor_test import EditorSingleTest, EditorTestSuite
 from Atom.atom_utils.atom_component_helper import compare_screenshot_to_golden_image, golden_images_directory
 
@@ -25,7 +24,6 @@ class TestAutomation(EditorTestSuite):
     # Remove -autotest_mode from global_extra_cmdline_args since we need rendering for these tests.
     global_extra_cmdline_args = ["-autotest_mode"]  # Default is ["-BatchMode", "-autotest_mode"]
     use_null_renderer = False  # Default is True
-    enable_prefab_system = False
 
     @staticmethod
     def screenshot_setup(screenshot_directory, screenshot_names):
@@ -43,7 +41,6 @@ class TestAutomation(EditorTestSuite):
             golden_image_path = os.path.join(golden_images_directory(), golden_image)
             golden_images.append(golden_image_path)
         return test_screenshots, golden_images
-
 
     @pytest.mark.test_case_id("C34525095")
     class AtomGPU_LightComponent_AreaLightScreenshotsMatchGoldenImages_DX12(EditorSingleTest):
@@ -156,50 +153,6 @@ class TestAutomation(EditorTestSuite):
                                                       similarity_threshold=0.96) is True
 
 
-@pytest.mark.parametrize('rhi', ['dx12', 'vulkan'])
-@pytest.mark.parametrize("project", ["AutomatedTesting"])
-@pytest.mark.parametrize("launcher_platform", ["windows_editor"])
-@pytest.mark.parametrize("level", ["AtomFeatureIntegrationBenchmark"])
-class TestPerformanceBenchmarkSuite(object):
-    def test_AtomFeatureIntegrationBenchmark(
-            self, request, editor, workspace, rhi, project, launcher_platform, level):
-        """
-        Please review the hydra script run by this test for more specific test info.
-        Tests the performance of the Simple level.
-        """
-        expected_lines = [
-            "Benchmark metadata captured.",
-            "Pass timestamps captured.",
-            "CPU frame time captured.",
-            "Captured data successfully.",
-            "Exited game mode"
-        ]
-
-        unexpected_lines = [
-            "Failed to capture data.",
-            "Failed to capture pass timestamps.",
-            "Failed to capture CPU frame time.",
-            "Failed to capture benchmark metadata."
-        ]
-
-        hydra.launch_and_validate_results(
-            request,
-            os.path.join(os.path.dirname(__file__), "tests"),
-            editor,
-            "hydra_GPUTest_AtomFeatureIntegrationBenchmark.py",
-            timeout=600,
-            expected_lines=expected_lines,
-            unexpected_lines=unexpected_lines,
-            halt_on_unexpected=True,
-            cfg_args=[level],
-            null_renderer=False,
-            enable_prefab_system=False,
-        )
-
-        aggregator = BenchmarkDataAggregator(workspace, logger, 'periodic')
-        aggregator.upload_metrics(rhi)
-
-
 @pytest.mark.parametrize("project", ["AutomatedTesting"])
 @pytest.mark.parametrize("launcher_platform", ['windows_generic'])
 class TestMaterialEditor(object):
@@ -232,5 +185,4 @@ class TestMaterialEditor(object):
             null_renderer=False,
             cfg_args=[cfg_args],
             log_file_name="MaterialEditor.log",
-            enable_prefab_system=False,
         )
